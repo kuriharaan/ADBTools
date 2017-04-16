@@ -11,4 +11,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d03889200d1c004497597db9e8ffc5d, type: 3}
   m_Name: ADBToolsSettings
   m_EditorClassIdentifier: 
-  toolsPath: C:\Android\android-sdk\platform-tools\
+  toolsPath: C:/Android/android-sdk/platform-tools
