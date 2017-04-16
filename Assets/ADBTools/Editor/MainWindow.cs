@@ -7,9 +7,9 @@ namespace ADBTools
 {
     public class MainWindow : EditorWindow
     {
+        bool     toolPathVerified = false;
         Settings settings;
 
-        //static string settingAssetName = "Assets/ADBTools/Resources/ADBToolsSettings.asset";
         static string settingAssetName = "ADBToolsSettings";
 
         [MenuItem("Window/ADBTools")]
@@ -27,53 +27,68 @@ namespace ADBTools
                 AssetDatabase.CreateAsset(window.settings, string.Concat(dirpath, "/Resources/", settingAssetName, ".asset"));
                 AssetDatabase.Refresh();
             }
+
+            window.toolPathVerified = ToolPath.VerifyPath(window.settings.toolsPath);
         }
 
         private void OnGUI()
         {
-            if( GUILayout.Button("install") )
+            if(toolPathVerified)
             {
-                //string apkPath = EditorUtility.OpenFilePanel("Select apk file", "", "apk"); //apkファイルの選択ダイアログを開く
-                string apkPath = System.IO.Directory.GetCurrentDirectory() + "/build/test.apk";
-
-                if (string.IsNullOrEmpty(apkPath))
+                if (GUILayout.Button("install"))
                 {
-                    return;
+                    string apkPath = System.IO.Directory.GetCurrentDirectory() + "/build/test.apk";
+
+                    if (string.IsNullOrEmpty(apkPath))
+                    {
+                        return;
+                    }
+
+                    string adbPath = ToolPath.AdbPath(settings.toolsPath);
+
+                    //インストールプロセスを実行: adb install -r apk
+                    var installProcess = new System.Diagnostics.Process();
+                    installProcess.StartInfo.FileName = adbPath;
+                    installProcess.StartInfo.Arguments = "install -r " + apkPath;
+                    installProcess.StartInfo.UseShellExecute = false;
+                    installProcess.StartInfo.RedirectStandardOutput = true;
+                    installProcess.OutputDataReceived += new System.Diagnostics.DataReceivedEventHandler(OutputHandler);
+                    installProcess.StartInfo.RedirectStandardError = true;
+                    installProcess.ErrorDataReceived += new System.Diagnostics.DataReceivedEventHandler(ErrorOutputHanlder);
+
+                    installProcess.StartInfo.RedirectStandardInput = false;
+                    installProcess.StartInfo.CreateNoWindow = true;
+                    installProcess.EnableRaisingEvents = true;
+                    installProcess.Exited += new System.EventHandler(Process_Exit);
+
+                    installProcess.Start();
+                    installProcess.BeginOutputReadLine();
+                    installProcess.BeginErrorReadLine();
+
+                    /*
+                    installProcess.WaitForExit();
+                    */
+
+                    // 起動プロセスを実行: adb shell am start -n YourActivity
+                    /*
+                    var runProcess = new System.Diagnostics.Process();
+                    runProcess.StartInfo.FileName = adbPath;
+                    runProcess.StartInfo.Arguments = "shell am start -n " + Application.identifier + "/com.unity3d.player.UnityPlayerActivity";
+
+                    runProcess.Start();
+                    */
                 }
 
-                string adbPath = settings.toolsPath + "/adb.exe";
+            }
+            else
+            {
+                GUILayout.Label("Need android tools path");
 
-                //インストールプロセスを実行: adb install -r apk
-                var installProcess = new System.Diagnostics.Process();
-                installProcess.StartInfo.FileName = adbPath;
-                installProcess.StartInfo.Arguments = "install -r " + apkPath;
-                installProcess.StartInfo.UseShellExecute = false;
-                installProcess.StartInfo.RedirectStandardOutput = true;
-                installProcess.OutputDataReceived += new System.Diagnostics.DataReceivedEventHandler(OutputHandler);
-                installProcess.StartInfo.RedirectStandardError = true;
-                installProcess.ErrorDataReceived += new System.Diagnostics.DataReceivedEventHandler(ErrorOutputHanlder);
-
-                installProcess.StartInfo.RedirectStandardInput = false;
-                installProcess.StartInfo.CreateNoWindow = true;
-                installProcess.EnableRaisingEvents = true;
-                installProcess.Exited += new System.EventHandler(Process_Exit);
-
-                installProcess.Start();
-                installProcess.BeginOutputReadLine();
-                installProcess.BeginErrorReadLine();
-
-                /*
-                installProcess.WaitForExit();
-                */
-
-                // 起動プロセスを実行: adb shell am start -n YourActivity
-                /*
-                var runProcess = new System.Diagnostics.Process();
-                runProcess.StartInfo.FileName = adbPath;
-                runProcess.StartInfo.Arguments = "shell am start -n " + Application.identifier + "/com.unity3d.player.UnityPlayerActivity";
-
-                runProcess.Start();
-                */
+                if( GUILayout.Button("Select adb directory") )
+                {
+                    settings.toolsPath = EditorUtility.OpenFolderPanel("Select adb directory", "", "");
+                    toolPathVerified   = ToolPath.VerifyPath(settings.toolsPath);
+                }
             }
         }
 
