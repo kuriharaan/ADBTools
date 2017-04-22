@@ -71,6 +71,12 @@ namespace ADBTools
                         {
                             Install(apk.fullPath);
                         }
+                        if( apk.installed )
+                        {
+                            if (GUILayout.Button("uninstall"))
+                            {
+                            }
+                        }
                     }
                 }
                 else
@@ -100,7 +106,7 @@ namespace ADBTools
             {
                 apkListUpdated = false;
                 refreshElapsedTime = 0.0f;
-                projectApk.RefreshList(ToolPath.AaptPath(settings.toolsPath));
+                projectApk.RefreshList(ToolPath.AaptPath(settings.toolsPath), ToolPath.AdbPath(settings.toolsPath));
             }
         }
 

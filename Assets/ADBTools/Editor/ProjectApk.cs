@@ -12,15 +12,17 @@ namespace ADBTools
             public string fullPath;
             public string relativePath;
             public string packageName;
+            public bool   installed;
         }
 
         public List<ApkData> Apks { get; private set; }
         public System.Action onRefreshComplete;
 
-        string packageToolPath;
+        string aaptPath;
+        string adbPath;
         Thread thread;
 
-        private void ProcessRefresh()
+        void ProcessRefresh()
         {
             Apks = new List<ApkData>();
 
@@ -32,37 +34,10 @@ namespace ADBTools
                 ApkData data = new ApkData();
                 data.fullPath = files[i];
                 data.relativePath = files[i].Replace(projectDir, "");
-                //data.packageName  = ToolPath.AaptPath
                 Apks.Add(data);
             }
-
-            for (int i = 0; i < Apks.Count; ++i)
-            {
-                System.Diagnostics.Process p = new System.Diagnostics.Process();
-
-                p.StartInfo.FileName = packageToolPath;
-                p.StartInfo.Arguments = "l -a " + Apks[i].fullPath;
-                p.StartInfo.UseShellExecute = false;
-                p.StartInfo.RedirectStandardOutput = true;
-                p.StartInfo.RedirectStandardInput = false;
-                p.StartInfo.CreateNoWindow = true;
-
-                p.Start();
-
-                string results = p.StandardOutput.ReadToEnd();
-                p.WaitForExit();
-                p.Close();
-
-                System.IO.StringReader reader = new System.IO.StringReader(results);
-                while (reader.Peek() > -1)
-                {
-                    var line = reader.ReadLine();
-                    if (line.TrimStart().StartsWith("A: package"))
-                    {
-                        Apks[i].packageName = line.Split('"')[1];
-                    }
-                }
-            }
+            UpdatePackageNames();
+            UpdateInstalled();
 
             if (null != onRefreshComplete)
             {
@@ -71,12 +46,55 @@ namespace ADBTools
         }
 
         /// <summary>
+        /// Update apk package name through call Aapt
+        /// </summary>
+        void UpdatePackageNames()
+        {
+            foreach( var apk in Apks )
+            {
+                string results = ProcessCall.Execute(aaptPath, "l -a " + apk.fullPath);
+
+                System.IO.StringReader reader = new System.IO.StringReader(results);
+                while (reader.Peek() > -1)
+                {
+                    var line = reader.ReadLine();
+                    if (line.TrimStart().StartsWith("A: package"))
+                    {
+                        apk.packageName = line.Split('"')[1];
+                    }
+                }
+            }
+        }
+
+        public void UpdateInstalled()
+        {
+            foreach (var apk in Apks)
+            {
+
+                string results = ProcessCall.Execute(adbPath, "shell pm list packages " + apk.packageName);
+
+                System.IO.StringReader reader = new System.IO.StringReader(results);
+                while (reader.Peek() > -1)
+                {
+                    var line = reader.ReadLine();
+                    var words = line.Split(':');
+                    if (2 <= words.Length && apk.packageName == words[1])
+                    {
+                        apk.installed = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Refresh list apks those are under project directory.
         /// </summary>
         /// <returns></returns>
-        public void RefreshList(string packageToolPath)
+        public void RefreshList(string aaptPath, string adbPath)
         {
-            this.packageToolPath = packageToolPath;
+            this.aaptPath = aaptPath;
+            this.adbPath  = adbPath;
             thread = new Thread(ProcessRefresh);
             thread.Start();
         }
