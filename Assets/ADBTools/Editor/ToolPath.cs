@@ -11,14 +11,14 @@ namespace ADBTools
         /// </summary>
         /// <param name="dirpath"></param>
         /// <returns></returns>
-        public static bool VerifyPath(string dirpath)
+        public static bool VerifyPath(string sdkPath)
         {
-            if( !System.IO.Directory.Exists(dirpath) )
+            if( !System.IO.Directory.Exists(sdkPath) )
             {
                 return false;
             }
 
-            if( !System.IO.File.Exists(AdbPath(dirpath)) )
+            if( !System.IO.File.Exists(AdbPath(sdkPath)) )
             {
                 return false;
             }
@@ -31,16 +31,37 @@ namespace ADBTools
         /// </summary>
         /// <param name="dirpath"></param>
         /// <returns></returns>
-        public static string AdbPath(string dirpath)
+        public static string AdbPath(string sdkPath)
         {
-            var adbPath = dirpath;
+            var adbPath = sdkPath;
             if (!adbPath.EndsWith("/"))
             {
                 adbPath += "/";
             }
-            adbPath += "adb.exe";
+            adbPath += "platform-tools/adb.exe";
 
             return adbPath;
+        }
+
+        public static string AaptPath(string sdkPath)
+        {
+            if (!sdkPath.EndsWith("/"))
+            {
+                sdkPath += "/";
+            }
+            string[] directories = System.IO.Directory.GetDirectories(sdkPath + "build-tools");
+
+            for( int i = 0; i < directories.Length; ++i )
+            {
+                string[] files = System.IO.Directory.GetFiles(directories[i], "aapt.exe", System.IO.SearchOption.AllDirectories);
+
+                if( files.Length > 0 )
+                {
+                    return files[0];
+                }
+            }
+
+            return null;
         }
     }
 }

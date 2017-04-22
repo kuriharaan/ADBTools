@@ -8,6 +8,9 @@ namespace ADBTools
     public class MainWindow : EditorWindow
     {
         bool     toolPathVerified = false;
+        bool     apkListUpdated   = false;
+        bool     repaintReq       = false;
+        float    refreshElapsedTime = 0.0f;
         Settings settings;
         ProjectApk projectApk = new ProjectApk();
 
@@ -29,22 +32,51 @@ namespace ADBTools
                 AssetDatabase.Refresh();
             }
 
-            window.toolPathVerified = ToolPath.VerifyPath(window.settings.toolsPath);
-            window.projectApk.RefreshList();
+            window.apkListUpdated = false;
+            window.projectApk.onRefreshComplete += window.OnApksRefreshComplete;
+            window.SetVerified( ToolPath.VerifyPath(window.settings.toolsPath) );
+        }
+
+        void OnApksRefreshComplete()
+        {
+            apkListUpdated = true;
+            RequestRepaint();
+        }
+
+        void RequestRepaint()
+        {
+            repaintReq = true;
+        }
+
+        private void Update()
+        {
+            if( repaintReq )
+            {
+                Repaint();
+            }
         }
 
         private void OnGUI()
         {
             if(toolPathVerified)
             {
-                foreach (var apk in projectApk.Apks)
+                if (apkListUpdated)
                 {
-                    GUILayout.Label("---");
-                    GUILayout.Label(apk.relativePath);
-                    if (GUILayout.Button("install"))
+                    foreach (var apk in projectApk.Apks)
                     {
-                        Install(apk.fullPath);
+                        GUILayout.Label("---");
+                        GUILayout.Label(apk.relativePath);
+                        GUILayout.Label(apk.packageName);
+                        if (GUILayout.Button("install"))
+                        {
+                            Install(apk.fullPath);
+                        }
                     }
+                }
+                else
+                {
+                    refreshElapsedTime += Time.deltaTime;
+                    GUILayout.Label("updating ...");
                 }
             }
             else
@@ -54,8 +86,21 @@ namespace ADBTools
                 if( GUILayout.Button("Select adb directory") )
                 {
                     settings.toolsPath = EditorUtility.OpenFolderPanel("Select adb directory", "", "");
-                    toolPathVerified   = ToolPath.VerifyPath(settings.toolsPath);
+                    SetVerified(ToolPath.VerifyPath(settings.toolsPath));
                 }
+            }
+        }
+
+        void SetVerified(bool verified)
+        {
+            if (toolPathVerified == verified) return;
+
+            toolPathVerified = verified;
+            if( toolPathVerified )
+            {
+                apkListUpdated = false;
+                refreshElapsedTime = 0.0f;
+                projectApk.RefreshList(ToolPath.AaptPath(settings.toolsPath));
             }
         }
 
