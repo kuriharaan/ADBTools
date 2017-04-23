@@ -19,7 +19,7 @@ click 'Uninstall' button.
 ![screenshotadbtools](https://cloud.githubusercontent.com/assets/1992059/25312134/6d580870-284c-11e7-99e1-18980ddcd0bd.PNG)
 
 ## Unity version
-This asset made with Unity5.6.
+This asset made with Unity5.6/Windows 64bit.
 This asset might work with older version, but isn't confirmed.
 
 ## License
