@@ -16,5 +16,5 @@ If you want to uninstall apk from your device,
 click 'Uninstall' button.
 'Uninstall' button would be showed only if the apk was installed into your device.
 
-
-
+## License
+MIT
