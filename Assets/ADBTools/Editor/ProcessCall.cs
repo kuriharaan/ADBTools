@@ -2,25 +2,34 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ProcessCall
+namespace ADBTools
 {
-    static public string Execute(string file, string args)
+    public class ProcessCall
     {
-        System.Diagnostics.Process p = new System.Diagnostics.Process();
+        /// <summary>
+        /// Execute system process.
+        /// </summary>
+        /// <param name="file">file path</param>
+        /// <param name="args">arguments</param>
+        /// <returns>standard output string</returns>
+        public static string Execute(string file, string args)
+        {
+            System.Diagnostics.Process p = new System.Diagnostics.Process();
 
-        p.StartInfo.FileName = file;
-        p.StartInfo.Arguments = args;
-        p.StartInfo.UseShellExecute = false;
-        p.StartInfo.RedirectStandardOutput = true;
-        p.StartInfo.RedirectStandardInput = false;
-        p.StartInfo.CreateNoWindow = true;
+            p.StartInfo.FileName = file;
+            p.StartInfo.Arguments = args;
+            p.StartInfo.UseShellExecute = false;
+            p.StartInfo.RedirectStandardOutput = true;
+            p.StartInfo.RedirectStandardInput = false;
+            p.StartInfo.CreateNoWindow = true;
 
-        p.Start();
+            p.Start();
 
-        string results = p.StandardOutput.ReadToEnd();
-        p.WaitForExit();
-        p.Close();
+            string results = p.StandardOutput.ReadToEnd();
+            p.WaitForExit();
+            p.Close();
 
-        return results;
+            return results;
+        }
     }
 }

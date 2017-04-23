@@ -75,6 +75,7 @@ namespace ADBTools
                         {
                             if (GUILayout.Button("uninstall"))
                             {
+                                Uninstall(apk.packageName);
                             }
                         }
                     }
@@ -104,16 +105,24 @@ namespace ADBTools
             toolPathVerified = verified;
             if( toolPathVerified )
             {
-                apkListUpdated = false;
-                refreshElapsedTime = 0.0f;
-                projectApk.RefreshList(ToolPath.AaptPath(settings.toolsPath), ToolPath.AdbPath(settings.toolsPath));
+                RefreshApkList();
             }
+        }
+
+        /// <summary>
+        /// refresh the apk list
+        /// </summary>
+        void RefreshApkList()
+        {
+            apkListUpdated = false;
+            refreshElapsedTime = 0.0f;
+            projectApk.RefreshList(ToolPath.AaptPath(settings.toolsPath), ToolPath.AdbPath(settings.toolsPath));
         }
 
         /// <summary>
         /// install apk
         /// </summary>
-        /// <param name="apkPath"></param>
+        /// <param name="apkPath">path of apk</param>
         void Install(string apkPath)
         {
             if (string.IsNullOrEmpty(apkPath))
@@ -122,38 +131,19 @@ namespace ADBTools
             }
 
             string adbPath = ToolPath.AdbPath(settings.toolsPath);
+            ProcessCall.Execute(adbPath, "install -r " + apkPath);
+            ProcessCall.Execute(adbPath, "shell am start -n " + Application.identifier + "/com.unity3d.player.UnityPlayerActivity");
+            RefreshApkList();
+        }
 
-            //インストールプロセスを実行: adb install -r apk
-            var installProcess = new System.Diagnostics.Process();
-            installProcess.StartInfo.FileName = adbPath;
-            installProcess.StartInfo.Arguments = "install -r " + apkPath;
-            installProcess.StartInfo.UseShellExecute = false;
-            installProcess.StartInfo.RedirectStandardOutput = true;
-            installProcess.OutputDataReceived += new System.Diagnostics.DataReceivedEventHandler(OutputHandler);
-            installProcess.StartInfo.RedirectStandardError = true;
-            installProcess.ErrorDataReceived += new System.Diagnostics.DataReceivedEventHandler(ErrorOutputHanlder);
-
-            installProcess.StartInfo.RedirectStandardInput = false;
-            installProcess.StartInfo.CreateNoWindow = true;
-            installProcess.EnableRaisingEvents = true;
-            installProcess.Exited += new System.EventHandler(Process_Exit);
-
-            installProcess.Start();
-            installProcess.BeginOutputReadLine();
-            installProcess.BeginErrorReadLine();
-
-            /*
-            installProcess.WaitForExit();
-            */
-
-            // 起動プロセスを実行: adb shell am start -n YourActivity
-            /*
-            var runProcess = new System.Diagnostics.Process();
-            runProcess.StartInfo.FileName = adbPath;
-            runProcess.StartInfo.Arguments = "shell am start -n " + Application.identifier + "/com.unity3d.player.UnityPlayerActivity";
-
-            runProcess.Start();
-            */
+        /// <summary>
+        /// Uninstall apk
+        /// </summary>
+        /// <param name="packageName">package name</param>
+        void Uninstall(string packageName)
+        {
+            ProcessCall.Execute(ToolPath.AdbPath(settings.toolsPath), "uninstall " + packageName);
+            RefreshApkList();
         }
 
         /// <summary>

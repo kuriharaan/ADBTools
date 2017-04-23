@@ -70,7 +70,6 @@ namespace ADBTools
         {
             foreach (var apk in Apks)
             {
-
                 string results = ProcessCall.Execute(adbPath, "shell pm list packages " + apk.packageName);
 
                 System.IO.StringReader reader = new System.IO.StringReader(results);
