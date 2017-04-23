@@ -31,9 +31,15 @@ namespace ADBTools
 
             for (int i = 0; i < files.Length; ++i)
             {
+                var relativePath = files[i].Replace(projectDir, "");
+                if ( relativePath.StartsWith("\\Temp\\") )
+                {
+                    continue;
+                }
+
                 ApkData data = new ApkData();
-                data.fullPath = files[i];
-                data.relativePath = files[i].Replace(projectDir, "");
+                data.fullPath     = files[i];
+                data.relativePath = relativePath;
                 Apks.Add(data);
             }
             UpdatePackageNames();
