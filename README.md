@@ -16,5 +16,9 @@ If you want to uninstall apk from your device,
 click 'Uninstall' button.
 'Uninstall' button would be showed only if the apk was installed into your device.
 
+## Unity version
+This asset made with Unity5.6.
+This asset might work with older version, but isn't confirmed.
+
 ## License
 MIT
